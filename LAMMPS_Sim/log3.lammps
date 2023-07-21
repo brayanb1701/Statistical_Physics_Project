@@ -1,0 +1,186 @@
+LAMMPS (15 Jun 2023)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+Loaded 1 plugins from C:\Users\obrb1\AppData\Local\LAMMPS 64-bit 15Jun2023-MSMPI\plugins
+## Set temperature
+variable T equal 301
+
+units real
+atom_style full
+
+read_restart restart.300K
+Reading restart file ...
+  restart file = 15 Jun 2023, LAMMPS = 15 Jun 2023
+WARNING: Restart file used different # of processors: 4 vs. 8 (src/read_restart.cpp:661)
+  restoring atom style full from restart
+  orthogonal box = (-22.014628 -22.878256 -21.56983) to (22.014628 22.878256 21.56983)
+  2 by 2 by 2 MPI processor grid
+  restoring pair style lj/cut/coul/long from restart
+  restoring bond style harmonic from restart
+  restoring angle style harmonic from restart
+  8640 atoms
+  5760 bonds
+  2880 angles
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     2 = max # of 1-2 neighbors
+     1 = max # of 1-3 neighbors
+     1 = max # of 1-4 neighbors
+     2 = max # of special neighbors
+  special bonds CPU = 0.001 seconds
+  read_restart CPU = 0.006 seconds
+
+include forcefield.SPCE
+# Original model from Berendsen et al, J Phys Chem 91:6269 (1987)
+# Charges and geometry are specified in the "data." file.
+
+mass 1 1.00794 # H
+mass 2 15.9994 # O
+
+pair_style lj/cut/coul/long 10.0
+pair_modify tail yes
+kspace_style pppm 1.0e-5
+
+pair_coeff 1 1 0.00000 0.000
+pair_coeff 1 2 0.00000 0.000
+pair_coeff 2 2 0.15535 3.166
+
+bond_style harmonic
+bond_coeff 1 0.0 1.0
+
+angle_style harmonic
+angle_coeff 1 0.0 109.47
+
+pair_modify tail no
+
+group hydrogen type 1
+5760 atoms in group hydrogen
+group oxygen type 2
+2880 atoms in group oxygen
+
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check yes
+
+timestep 2.0
+
+fix constrain all shake 1.0e-4 100 0 b 1 a 1
+Finding SHAKE clusters ...
+       0 = # of size 2 clusters
+       0 = # of size 3 clusters
+       0 = # of size 4 clusters
+    2880 = # of frozen angles
+  find clusters CPU = 0.001 seconds
+
+####### Change size of simulation cell
+fix 2 all deform 1 x scale 10 y scale 10 z scale 10
+#### Choose one of the two: NVT or NPT #####
+####### NVT: Run simulation at constant volume and temperature
+fix integrate all nvt temp $T $T 200.0
+fix integrate all nvt temp 301 $T 200.0
+fix integrate all nvt temp 301 301 200.0
+####### NPT: Run simulation at constant pressure and temperature
+#fix 1 all npt temp $T $T 100.0 iso 1.0 1.0 200.0
+
+
+
+# Thermodynamic output
+thermo_style custom step time temp etotal enthalpy press vol density
+thermo 100
+
+# Trajectory output
+dump trj all atom 10 water_$TK.lammpstrj
+dump trj all atom 10 water_301K.lammpstrj
+
+run 2000
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/kspace.cpp:342)
+  G vector (1/distance) = 0.30215384
+  grid = 36 40 36
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0036461548
+  estimated relative force accuracy = 1.0980287e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 16875 7200
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Unused restart file global fix info:
+  fix style: npt, fix ID: 1
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 12
+  ghost atom cutoff = 12
+  binsize = 6, bins = 8 8 8
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut/coul/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 10.83 | 10.96 | 11.28 Mbytes
+   Step          Time           Temp          TotEng        Enthalpy        Press          Volume        Density    
+    140000   280000         297.42974     -26693.839     -26591.185      80.989791      86910.247      0.99131477   
+    140100   280200         494.20823     -8347.7235     -13208.02      -1257.8007      264956.75      0.32516783   
+    140200   280400         556.0453      -3782.4613     -4380.3212     -68.768843      596117.39      0.14452759   
+    140300   280600         540.63834     -2545.9155     -2046.117       30.383969      1127910.3      0.076384984  
+    140400   280800         500.75721     -2600.9038     -1656.6064      33.938122      1907853.8      0.04515829   
+    140500   281000         462.31106     -3159.6575     -2293.7932      19.899991      2983465.8      0.028877626  
+    140600   281200         421.13681     -3866.5575     -3137.5823      11.354309      4402264.8      0.019570702  
+    140700   281400         397.20154     -4558.127      -3789.1537      8.4882883      6211768.7      0.013869707  
+    140800   281600         368.02292     -5267.0577     -4114.0503      9.3456979      8459495.8      0.010184462  
+    140900   281800         358.14884     -5770.8449     -4835.5263      5.7297881      11192964       0.0076972828 
+    141000   282000         344.44143     -6279.5922     -5474.965       3.8155731      14459692       0.0059583157 
+    141100   282200         332.37322     -6721.5559     -5719.9886      3.751305       18307198       0.0047060949 
+    141200   282400         324.20797     -7104.7049     -6407.2291      2.0991447      22783000       0.0037815657 
+    141300   282600         314.91215     -7436.2942     -6808.4925      1.5410046      27934616       0.003084181  
+    141400   282800         313.83986     -7637.3007     -7428.5939      0.42327346     33809564       0.0025482557 
+    141500   283000         308.95105     -7810.8774     -7013.0014      1.3523322      40455362       0.0021296413 
+    141600   283200         304.05082     -7927.1407     -7387.4295      0.77227688     47919529       0.0017979186 
+    141700   283400         304.86262     -7957.7576     -7407.0538      0.67130967     56249583       0.0015316631 
+    141800   283600         303.88176     -7995.7079     -8116.4091     -0.126369       65493042       0.0013154895 
+    141900   283800         304.78821     -7989.5806     -8073.8021     -0.076289645    75697424       0.0011381551 
+    142000   284000         300.72428     -7952.9152     -7514.5782      0.34582885     86910247       0.00099131477
+Loop time of 48.8639 on 8 procs for 2000 steps with 8640 atoms
+
+Performance: 7.073 ns/day, 3.393 hours/ns, 40.930 timesteps/s, 353.635 katom-step/s
+89.7% CPU use with 8 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.79101    | 0.84052    | 0.87823    |   2.9 |  1.72
+Bond    | 0.000957   | 0.0010153  | 0.001106   |   0.2 |  0.00
+Kspace  | 4.1842     | 4.2055     | 4.2321     |   0.8 |  8.61
+Neigh   | 0.60347    | 0.60657    | 0.60957    |   0.2 |  1.24
+Comm    | 0.4686     | 0.49313    | 0.52216    |   2.2 |  1.01
+Output  | 0.52054    | 1.2434     | 1.7374     |  39.2 |  2.54
+Modify  | 29.083     | 34.226     | 40.759     |  73.5 | 70.04
+Other   |            | 7.248      |            |       | 14.83
+
+Nlocal:           1080 ave        1202 max         979 min
+Histogram: 2 0 1 0 2 1 0 0 1 1
+Nghost:         369.75 ave         512 max         255 min
+Histogram: 1 0 1 1 2 2 0 0 0 1
+Neighs:           7976 ave       10075 max        5972 min
+Histogram: 1 1 0 1 0 2 2 0 0 1
+
+Total # of neighbors = 63808
+Ave neighs/atom = 7.3851852
+Ave special neighs/atom = 2
+Neighbor list builds = 666
+Dangerous builds = 0
+write_restart restart.$TK
+write_restart restart.301K
+System init for write_restart ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/kspace.cpp:342)
+  G vector (1/distance) = 0.23519337
+  grid = 162 180 160
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0042055903
+  estimated relative force accuracy = 1.266501e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 694450 583200
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+
+Total wall time: 0:00:48
